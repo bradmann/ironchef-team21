@@ -7,18 +7,19 @@ import java.security.NoSuchAlgorithmException;
 
 import javax.imageio.ImageIO;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.FileInputFormat;
-import org.apache.hadoop.mapred.FileOutputFormat;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.MapReduceBase;
-import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Reporter;
-import org.apache.hadoop.mapred.SequenceFileInputFormat;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.util.GenericOptionsParser;
 
 import com.googlecode.javacpp.Loader;
 import com.googlecode.javacv.cpp.opencv_core.CvMemStorage;
@@ -34,7 +35,7 @@ import static com.googlecode.javacv.cpp.opencv_objdetect.*;
 import static com.googlecode.javacv.cpp.opencv_highgui.*;
 public class FaceDetector {
 
-	public static class FaceDetectMapper extends MapReduceBase implements Mapper<Text, BytesWritable, Text, CvSeq>{
+	public static class FaceDetectMapper extends Mapper<Text, BytesWritable, Text, CvSeq>{
 		public static final int SUBSAMPLING_FACTOR = 4;
 		private IplImage inputImage;
 	    private CvHaarClassifierCascade classifier;
@@ -109,17 +110,18 @@ public class FaceDetector {
 		}
 	}
 	public static void main(String[] args) throws Exception {
-
 		//This is the line that makes the hadoop run locally
 		//conf.set("mapred.job.tracker", "local");
-		/*String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
-		if (otherArgs.length != 2) {
-			System.err.println("Usage: wordcount <in> <out>");
-			System.exit(2);
-		}*/
-		JobConf job = new JobConf(FaceDetector.class);
-		job.setJobName("DetectFaces");
-		job.setInputFormat(SequenceFileInputFormat.class);
+		
+		Configuration conf = new Configuration();
+        String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
+        if (otherArgs.length < 1) {
+            System.err.println("Usage: LinkCountInDoc configFile");
+            System.exit(2);
+        }
+		Job job = new Job(conf, "DetectFaces");
+		job.setJarByClass(FaceDetector.class);
+		job.setInputFormatClass(SequenceFileInputFormat.class);
 		job.setMapperClass(FaceDetectMapper.class);
 		//job.setNumReduceTasks(2);
 		//job.setOutputKeyClass(Text.class);
@@ -127,6 +129,10 @@ public class FaceDetector {
 		FileInputFormat.setInputPaths(job, new Path(args[0]));
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
-		job.wait();
+		
+		conf = job.getConfiguration();
+        conf.addResource(otherArgs[0]);
+    
+        System.exit(job.waitForCompletion(true) ? 0 : 1);
 	}
 }

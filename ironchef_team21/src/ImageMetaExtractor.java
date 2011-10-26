@@ -11,22 +11,26 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.FileInputFormat;
-import org.apache.hadoop.mapred.FileOutputFormat;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MapReduceBase;
-import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.SequenceFileInputFormat;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.util.GenericOptionsParser;
 import org.w3c.dom.Node;
+
+import com.marklogic.mapreduce.NodeInputFormat;
 
 public class ImageMetaExtractor {
 
-	public static class ImageMetaMapper extends MapReduceBase implements Mapper<Text, BytesWritable, Text, Text>{
+	public static class ImageMetaMapper extends Mapper<Text, BytesWritable, Text, Text>{
 	    
 		public void map(Text key, BytesWritable value, OutputCollector<Text, Text> output, Reporter reporter) {
 			try {	
@@ -64,24 +68,29 @@ public class ImageMetaExtractor {
 	}
 	
 	public static void main(String[] args) throws Exception {
-
 		//This is the line that makes the hadoop run locally
 		//conf.set("mapred.job.tracker", "local");
-		/*String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
-		if (otherArgs.length != 2) {
-			System.err.println("Usage: wordcount <in> <out>");
-			System.exit(2);
-		}*/
-		JobConf job = new JobConf(ImageMetaExtractor.class);
-		job.setJobName("DetectFaces");
-		job.setInputFormat(SequenceFileInputFormat.class);
-		job.setMapperClass(ImageMetaMapper.class);
-		//job.setNumReduceTasks(2);
-		//job.setOutputKeyClass(Text.class);
-		//job.setOutputValueClass(Text.class);
-		FileInputFormat.setInputPaths(job, new Path(args[0]));
-		FileInputFormat.addInputPath(job, new Path(args[0]));
-		FileOutputFormat.setOutputPath(job, new Path(args[1]));
-		job.wait();
+		
+		Configuration conf = new Configuration();
+        String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
+        if (otherArgs.length < 1) {
+            System.err.println("Usage: LinkCountInDoc configFile");
+            System.exit(2);
+        }
+
+        Job job = new Job(conf, "ExtractImageMeta");
+        job.setJarByClass(ImageMetaExtractor.class);
+        job.setInputFormatClass(FileInputFormat.class);
+        job.setMapperClass(ImageMetaMapper.class);
+        job.setMapOutputKeyClass(Text.class);
+        job.setMapOutputValueClass(Text.class);
+        //job.setOutputFormatClass(NodeOutputFormat.class);
+        //job.setOutputKeyClass(NodePath.class);
+        //job.setOutputValueClass(MarkLogicNode.class);
+        
+        conf = job.getConfiguration();
+        conf.addResource(otherArgs[0]);
+    
+        System.exit(job.waitForCompletion(true) ? 0 : 1);
 	}
 }
