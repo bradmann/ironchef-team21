@@ -14,17 +14,15 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.FileInputFormat;
+import org.apache.hadoop.mapred.FileOutputFormat;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MapReduceBase;
 import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Reporter;
-import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapred.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.util.GenericOptionsParser;
 
 import com.googlecode.javacpp.Loader;
 import com.googlecode.javacv.cpp.opencv_core.CvMemStorage;
@@ -42,7 +40,7 @@ public class FaceDetector {
 
 	public static class FaceDetectMapper extends MapReduceBase implements Mapper<Text, BytesWritable, Text, CvSeq>{
 		public static final int SUBSAMPLING_FACTOR = 4;
-		private IplImage grayImage;
+		private IplImage inputImage;
 	    private CvHaarClassifierCascade classifier;
 	    private CvMemStorage storage;
 	    private CvSeq faces;
@@ -73,11 +71,10 @@ public class FaceDetector {
 	        }
 	        storage = CvMemStorage.create();
 	        BufferedImage image = ImageIO.read ( new ByteArrayInputStream ( imageData ) );
-	        int f = SUBSAMPLING_FACTOR;
 	        
-	        grayImage = IplImage.createFrom(image);
+	        inputImage = IplImage.createFrom(image);
 
-	        faces = cvHaarDetectObjects(grayImage, classifier, storage, 1.1, 3, CV_HAAR_DO_CANNY_PRUNING);
+	        faces = cvHaarDetectObjects(inputImage, classifier, storage, 1.1, 3, CV_HAAR_DO_CANNY_PRUNING);
 	        cvClearMemStorage(storage);
 	        
 			return faces;
@@ -124,17 +121,16 @@ public class FaceDetector {
 			System.err.println("Usage: wordcount <in> <out>");
 			System.exit(2);
 		}*/
-		JobConf conf = new JobConf(FaceDetector.class);
-		conf.setJobName("DetectFaces");
-		//conf.setInputFormat(SequenceFileInputFormat.class);
-		conf.setMapperClass(FaceDetectMapper.class);
+		JobConf job = new JobConf(FaceDetector.class);
+		job.setJobName("DetectFaces");
+		job.setInputFormat(SequenceFileInputFormat.class);
+		job.setMapperClass(FaceDetectMapper.class);
 		//job.setNumReduceTasks(2);
-		conf.setOutputKeyClass(Text.class);
-		conf.setOutputValueClass(Text.class);
-		//FileInputFormat.setInputPaths(conf, new Path(args[0]));
-		//FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
-		//FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
-		//System.exit(job.waitForCompletion(true) ? 0 : 1);
-
+		//job.setOutputKeyClass(Text.class);
+		//job.setOutputValueClass(Text.class);
+		FileInputFormat.setInputPaths(job, new Path(args[0]));
+		FileInputFormat.addInputPath(job, new Path(args[0]));
+		FileOutputFormat.setOutputPath(job, new Path(args[1]));
+		job.wait();
 	}
 }
