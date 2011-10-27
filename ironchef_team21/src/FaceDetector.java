@@ -27,6 +27,8 @@ import com.googlecode.javacv.cpp.opencv_core.CvSeq;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
 import com.googlecode.javacv.cpp.opencv_objdetect;
 import com.googlecode.javacv.cpp.opencv_objdetect.CvHaarClassifierCascade;
+import com.marklogic.mapreduce.DocumentInputFormat;
+import com.marklogic.mapreduce.NodeInputFormat;
 
 
 import static com.googlecode.javacv.cpp.opencv_core.*;
@@ -121,11 +123,14 @@ public class FaceDetector {
         }
 		Job job = new Job(conf, "DetectFaces");
 		job.setJarByClass(FaceDetector.class);
-		job.setInputFormatClass(SequenceFileInputFormat.class);
+		job.setInputFormatClass(NodeInputFormat.class);
 		job.setMapperClass(FaceDetectMapper.class);
 		//job.setNumReduceTasks(2);
 		//job.setOutputKeyClass(Text.class);
 		//job.setOutputValueClass(Text.class);
+		//DocumentInputFormat.INPUT_DATABASE_NAME = "images";
+		//DocumentInputFormat.INPUT_QUERY = "collection('images')";
+		
 		FileInputFormat.setInputPaths(job, new Path(args[0]));
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
