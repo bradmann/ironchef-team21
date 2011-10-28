@@ -26,9 +26,11 @@ public class ImageProcessor {
 			try {
 				ImagePHash phash = new ImagePHash();
 				InputStream is = new ByteArrayInputStream(value.toString().getBytes());		
-				Logger.getRootLogger().info("***************************");
 				Text hash = new Text(phash.getHash(is));
 				String newkey = key.toString() + "_phash";
+				Logger.getRootLogger().info(value.toString().length());
+				Logger.getRootLogger().info(newkey);
+				Logger.getRootLogger().info(hash);
 	           	context.write(new DocumentURI(newkey), hash);
             } catch (Exception e) {
             	e.printStackTrace();
@@ -47,11 +49,10 @@ public class ImageProcessor {
         job.setInputFormatClass(KeyValueInputFormat.class);
         job.setMapperClass(PHashMapper.class);
         job.setMapOutputKeyClass(DocumentURI.class);
-        job.setMapOutputValueClass(MarkLogicNode.class);
-        job.setOutputFormatClass(TextOutputFormat.class);
+        job.setMapOutputValueClass(Text.class);
+        job.setOutputFormatClass(ContentOutputFormat.class);
         conf.set("mapred.reduce.tasks", "0");
         
-        job.setOutputFormatClass(ContentOutputFormat.class);
         
         conf = job.getConfiguration();
         conf.addResource("ImageProcessor.xml");

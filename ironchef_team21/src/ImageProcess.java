@@ -10,7 +10,6 @@ public class ImageProcess {
 		try {
 			ImagePHash phash = new ImagePHash();
 			File f = new File("/Users/bradmann/Downloads/Basketball.png");
-			
 			FileInputStream iis = new FileInputStream(f);
 		
 			String hash = phash.getHash(iis);
