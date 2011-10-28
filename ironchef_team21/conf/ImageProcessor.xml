@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<!-- Used with com.marklogic.mapreduce.examples.HelloWorld.class -->
+
+<configuration>
+    <property>
+        <name>mapreduce.marklogic.input.username</name>
+        <value>admin</value>
+    </property>
+    <property>
+        <name>mapreduce.marklogic.input.password</name>
+        <value>!ronChef2011</value>
+    </property>
+    <property>
+        <name>mapreduce.marklogic.input.host</name>
+        <value>http://ec2-50-19-201-152.compute-1.amazonaws.com/</value>
+    </property>
+    <property>
+        <name>mapreduce.marklogic.input.port</name>
+        <value>9100</value>
+    </property>
+    <property>
+    	<name>mapreduce.marklogic.input.mode</name>
+    	<value>basic</value>
+    </property>
+    <property>
+        <name>mapreduce.marklogic.output.username</name>
+        <value>admin</value>
+    </property>
+    <property>
+        <name>mapreduce.marklogic.output.password</name>
+        <value>!ronChef2011</value>
+    </property>
+    <property>
+        <name>mapreduce.marklogic.output.host</name>
+        <value>http://ec2-50-19-201-152.compute-1.amazonaws.com/</value>
+    </property>
+    <property>
+        <name>mapreduce.marklogic.output.port</name>
+        <value>9100</value>
+    </property>
+    <property>
+        <name>mapreduce.marklogic.output.content.type</name>
+        <value>TEXT</value>
+    </property>
+</configuration>
